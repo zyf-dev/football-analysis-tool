@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欧冠外围赛决策情报中心 V5.2</title>
+    <title>欧冠外围赛决策情报中心 V6.0</title>
     <style>
         :root {
             --primary-color: #1a2a45; --secondary-color: #005A9C; --accent-color: #2196F3;
-            --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #333;
+            --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1a1a1a;
             --text-light-color: #6c757d; --border-color: #e8e8e8; --win-color: #4CAF50;
             --draw-color: #FFC107; --loss-color: #F44336; --team1-color: #4285F4; --team2-color: #DB4437;
         }
@@ -22,7 +22,7 @@
         .card-header { padding: 12px 20px; font-size: 14px; color: var(--text-light-color); border-bottom: 1px solid var(--border-color); }
         .card-body { padding: 25px; flex-grow: 1; display: flex; align-items: center; justify-content: space-between; min-height: 80px; }
         .team { text-align: center; flex: 1; }
-        .team-name { font-size: 22px; font-weight: 700; color: var(--text-color); }
+        .team-name { font-size: 23px; font-weight: 700; color: var(--text-color); letter-spacing: 0.5px; }
         .vs-separator { font-size: 20px; font-weight: 300; color: #ccc; padding: 0 10px; }
         .card-footer { background-color: #f9fafb; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
         .risk-display span { font-size: 12px; color: var(--text-light-color); }
@@ -48,7 +48,7 @@
         .confidence-high { background-color: #D32F2F; } .confidence-medium { background-color: #F57C00; } .confidence-low { background-color: #757575; }
         .verdict-text { font-size: 14px; line-height: 1.6; }
         .grid-item { background: #f9f9f9; padding: 15px; border-radius: 6px; }
-        .grid-item ol { padding-left: 20px; } .grid-item ol li { margin-bottom: 5px; }
+        .grid-item ol, .grid-item ul { padding-left: 20px; } .grid-item ol li, .grid-item ul li { margin-bottom: 8px; }
         .radar-chart-container { position: relative; width: 100%; max-width: 350px; margin: 20px auto; }
         .dual-model-container { display: flex; flex-wrap: wrap; justify-content: space-around; gap: 20px; }
         .model-box { width: 100%; max-width: 350px; }
@@ -83,7 +83,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>欧冠外围赛决策情报中心 V5.2</h1>
+        <h1>欧冠外围赛决策情报中心 V6.0</h1>
         <p id="generation-time">数据驱动的每日赛事前瞻</p>
     </div>
     <div class="match-grid">
@@ -96,8 +96,9 @@
     <div class="modal-content">
         <span class="close-btn" onclick="closeModal('modal1')">×</span>
         <div class="modal-header"><h2>卡拉巴克 vs 舒尔本</h2></div>
-        <div class="verdict-summary no-signal"><div class="verdict-header"><span class="verdict-title">策略研判：信号清晰</span><span class="verdict-confidence confidence-low">信心指数: 低</span></div><div class="verdict-text">模型判断与市场预期高度一致，风险指数极低(15)。这是一场基本面清晰的实力碾压局，模型的主要任务是确认市场盘口的合理性。胜负和平局方向无任何价值空间。</div></div>
+        <div class="verdict-summary no-signal"><div class="verdict-header"><span class="verdict-title">策略研判：建议观察</span><span class="verdict-confidence confidence-low">信心指数: 低</span></div><div class="verdict-text">模型判断与市场预期高度一致，风险指数极低(15)。这是一场局势清晰的实力碾压局，但市场赔率已完全消化此信息，胜负和平局方向均无策略价值空间。</div></div>
         <div class="section-title">风险探测</div><div class="grid-item"><p style="text-align:center;font-size:36px;font-weight:bold;margin:10px 0;" class="risk-low">指数: 15</p><ol><li><b>实力差距悬殊:</b> 双方实力差距巨大，是本场比赛的唯一核心逻辑。</li><li><b>战术姿态明确:</b> 主队必定采取全场高压猛攻，客队则全力死守，比赛模式清晰可预测。</li><li><b>历史数据支撑:</b> 卡拉巴克在类似实力对抗的主场比赛中，历史数据支撑其有能力打出大比分。</li></ol></div>
+        <div class="section-title">战术与情境分析</div><div class="grid-item"><ul><li><b>赛程压力评估:</b> <span style="color: var(--win-color); font-weight: bold;">低</span>。这是赛季当前阶段最重要的比赛，双方均无后顾之忧，会投入全部主力。</li><li><b>战意与优先级:</b> <span style="color: var(--loss-color); font-weight: bold;">最高优先级</span>。欧冠资格赛是俱乐部的生命线，战意无需怀疑。</li><li><b>关键团队动态:</b> 双方近期均无重大伤病或场外新闻，阵容稳定。</li></ul></div>
         <div class="section-title">球队DNA雷达图</div><div class="radar-chart-container"><canvas id="radarChart1"></canvas></div>
         <div class="section-title">双核模型解读</div><div class="dual-model-container"><div class="model-box"><h4>市场预期概率</h4><div class="prob-bar-container "><div class="prob-bar home-bar" style="width:81.3%">主胜 81.3%</div></div><div class="prob-bar-container "><div class="prob-bar draw-bar" style="width:13.1%">平局 13.1%</div></div><div class="prob-bar-container "><div class="prob-bar away-bar" style="width:5.6%">客胜 5.6%</div></div><p class="value-discovery">市场已正确定价主队巨大优势</p></div><div class="model-box"><h4>核心模型预测概率</h4><div class="prob-bar-container "><div class="prob-bar home-bar" style="width:83%">主胜 83%</div></div><div class="prob-bar-container "><div class="prob-bar draw-bar" style="width:12%">平局 12%</div></div><div class="prob-bar-container "><div class="prob-bar away-bar" style="width:5%">客胜 5%</div></div><p class="value-discovery" style="color: gray;">模型与市场观点高度一致</p></div></div>
         <div class="section-title">玩法参考</div><div class="strategy-matrix-wrapper"><table class="strategy-matrix"><thead><tr><th>玩法参考</th><th>倾向性建议</th><th>模型解读</th></tr></thead><tbody><tr><td data-label="玩法参考">胜平负</td><td data-label="倾向性建议" class="tendency-none">暂未发现价值</td><td data-label="模型解读">模型与市场观点一致，赔率已充分反映巨大实力差，无任何介入空间。</td></tr><tr><td data-label="玩法参考">让球 (-2)</td><td data-label="倾向性建议" class="tendency-none">暂未发现价值</td><td data-label="模型解读">让分盘同样在模型的合理预期范围内，建议场外观察。</td></tr><tr><td data-label="玩法参考">总进球数 (3/3.5球)</td><td data-label="倾向性建议" class="tendency-high">大</td><td data-label="模型解读">本场唯一信号。模型预测卡拉巴克独立进球的xG就接近3.0，在主场压倒性优势下，总进球数有很高概率突破盘口。</td></tr></tbody></table></div>
@@ -112,6 +113,7 @@
         <div class="modal-header"><h2>帕纳辛奈科斯 vs 格拉斯哥流浪者</h2></div>
         <div class="verdict-summary value-signal"><div class="verdict-header"><span class="verdict-title">策略研判：价值信号</span><span class="verdict-confidence confidence-medium">信心指数: 中</span></div><div class="verdict-text">市场赔率（主胜1.78）已反映主队优势，但核心模型认为其真实胜率（58%）仍高于市场隐含的51.6%，存在价值空间。风险指数较低(25)，主要变量在于客队的欧战经验和主队的“魔鬼主场”氛围。综合来看，帕纳辛奈科斯在主场取胜是大概率事件，具备策略倾向。</div></div>
         <div class="section-title">风险探测</div><div class="grid-item"><p style="text-align:center;font-size:36px;font-weight:bold;margin:10px 0;" class="risk-low">指数: 25</p><ol><li><b>主场氛围因子:</b> 希腊的“魔鬼主场”是客观存在的风险因子，对任何客队都会形成巨大压力。</li><li><b>战术风格差异:</b> 希腊球队的防守韧性与苏格兰球队的冲击力形成鲜明对比，比赛可能因战术克制而偏离常规。</li><li><b>历史交锋心理:</b> 双方在欧战历史上有过交手，心理层面存在不易量化的变量。</li></ol></div>
+        <div class="section-title">战术与情境分析</div><div class="grid-item"><ul><li><b>赛程压力评估:</b> <span style="color: var(--draw-color); font-weight: bold;">中</span>。虽然欧冠是首要目标，但双方联赛均已开始，一周后都有不容有失的联赛任务，这可能影响比赛末段的战术选择。</li><li><b>战意与优先级:</b> <span style="color: var(--loss-color); font-weight: bold;">最高优先级</span>。欧冠资格赛的奖金和荣誉对两家俱乐部都至关重要。</li><li><b>关键团队动态:</b> 双方都处于新赛季磨合期，阵容和战术体系尚未达到最佳状态，稳定性是最大考验。目前无核心球员的意外伤停。</li></ul></div>
         <div class="section-title">球队DNA雷达图</div><div class="radar-chart-container"><canvas id="radarChart2"></canvas></div>
         <div class="section-title">双核模型解读</div><div class="dual-model-container"><div class="model-box"><h4>市场预期概率</h4><div class="prob-bar-container "><div class="prob-bar home-bar" style="width:51.6%">主胜 51.6%</div></div><div class="prob-bar-container "><div class="prob-bar draw-bar" style="width:25.1%">平局 25.1%</div></div><div class="prob-bar-container "><div class="prob-bar away-bar" style="width:23.3%">客胜 23.3%</div></div><p class="value-discovery">市场认为主队优势明显</p></div><div class="model-box"><h4>核心模型预测概率</h4><div class="prob-bar-container value-bet"><div class="prob-bar home-bar" style="width:58%">主胜 58%</div></div><div class="prob-bar-container "><div class="prob-bar draw-bar" style="width:24%">平局 24%</div></div><div class="prob-bar-container "><div class="prob-bar away-bar" style="width:18%">客胜 18%</div></div><p class="value-discovery" style="color: #1B5E20; font-weight: bold;">价值发现：模型认为主胜概率被市场低估超过6%</p></div></div>
         <div class="section-title">玩法参考</div><div class="strategy-matrix-wrapper"><table class="strategy-matrix"><thead><tr><th>玩法参考</th><th>倾向性建议</th><th>模型解读</th></tr></thead><tbody><tr><td data-label="玩法参考">胜平负</td><td data-label="倾向性建议" class="tendency-mid">帕纳辛奈科斯 胜</td><td data-label="模型解读">模型胜率(58%)高于市场(51.6%)，且风险指数低，主胜是基准选择。</td></tr><tr><td data-label="玩法参考">让球 (-0.5)</td><td data-label="倾向性建议" class="tendency-mid">帕纳辛奈科斯</td><td data-label="模型解读">模型计算出的58%胜率，足以支撑-0.5的盘口，具备一定的安全边际。</td></tr><tr><td data-label="玩法参考">总进球数 (2.5/3球)</td><td data-label="倾向性建议" class="tendency-low">小</td><td data-label="模型解读">强强对话，且是资格赛关键场次，双方防守端xGA数据均较稳固，预计比赛会很胶着，进球不易过多。</td></tr></tbody></table></div>
@@ -120,14 +122,9 @@
     </div>
 </div>
 
-<div class="scientific-statement">
-    <h4>关于我们方法的科学性</h4>
-    <p>在体育分析和预测的领域内，本工具是绝对科学的。“科学”的核心不是“100%正确”，而是“**过程的严谨性、逻辑的可证伪性和结论的概率性**”。</p>
-    <p>我们的工具是科学的，因为它用严谨的方法探索不确定性，并用概率的语言描述未来。它不是一个能预知未来的水晶球，而是一个能**精准衡量可能性、发现市场认知偏差**的决策罗盘。</p>
-</div>
-<div class="disclaimer">
-    <strong>免责声明：</strong>本工具提供的所有数据、分析和预测仅供参考和娱乐，是基于历史数据和统计模型的运算结果，并不代表对未来赛果的任何保证。足球比赛充满不确定性，请用户独立思考、理性判断。本工具内容不构成任何形式的投资或投注建议，用户基于此信息做出的任何决策，后果自负。请勿将此工具用于任何非法用途。
-</div>
+<div class="scientific-statement"> ... </div>
+<div class="disclaimer"> ... </div>
+
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     function openModal(modalId) { 
