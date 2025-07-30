@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚恋市场难度评估辅助系统 (V12.1 - 移动端优化版)</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans SC', sans-serif; background-color: #f4f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1600px; margin: 30px auto; display: flex; gap: 30px; align-items: flex-start; padding: 0 30px; }
+        .form-section { flex: 1; min-width: 400px; background: #fff; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 30px; position: sticky; top: 30px; }
+        .result-section { flex: 2.5; min-width: 600px; }
+        h1, h2, h3 { font-weight: 700; color: #1a3b5d; }
+        h1 { font-size: 2rem; margin-bottom: 5px; }
+        h1 i { color: #8e44ad; }
+        .subtitle { font-size: 1.1rem; color: #5a7b9d; margin-bottom: 20px; }
+        .disclaimer { font-size: 1.2rem; font-weight: 700; color: #d9534f; background-color: #f2dede; border: 1px solid #ebccd1; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 20px; }
+        .calc-mode-display { font-size: 0.85rem; color: #004085; background-color: #cce5ff; border-color: #b8daff; padding: 8px; border-radius: 5px; margin-bottom: 20px; display: none; }
+        label { font-weight: 500; font-size: 0.95rem; margin-bottom: 8px; display: flex; align-items: center; }
+        input, select { width: 100%; padding: 12px 15px; border: 1px solid #ced4da; border-radius: 8px; font-size: 1rem; margin-bottom: 20px; background-color: #fdfdfd; }
+        .input-group { display:flex; gap:10px; } /* Added for age inputs */
+        .btn-container { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-top: 20px; }
+        .btn { border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 8px;}
+        .btn:disabled { background-color: #adb5bd; cursor: not-allowed; }
+        #calculateBtn { background-color: #8e44ad; color: #fff; } #calculateBtn:hover { background-color: #703688; }
+        #saveBtn { background-color: #28a745; color: #fff; } #saveBtn:hover { background-color: #218838; }
+        #resetBtn { background-color: #6c757d; color: #fff; } #resetBtn:hover { background-color: #5a6268; }
+        .result-box { background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); margin-bottom: 30px; position: relative; }
+        h2 { font-size: 1.8rem; margin-bottom: 25px; }
+        sup { font-size: 0.8rem; color: #8e44ad; font-weight: bold; margin-left: 2px; }
+        h3 { font-size: 1.4rem; border-bottom: 2px solid #e9ecef; padding-bottom: 10px; margin-bottom: 20px; }
+        .chart-container { height: 350px; }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        .criteria-list { list-style: none; padding: 0; columns: 2; -webkit-columns: 2; -moz-columns: 2; gap: 10px; }
+        .criteria-list li { background: #e9ecef; padding: 5px 12px; border-radius: 5px; margin-bottom: 8px; font-size: 0.9rem; }
+        .loader { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.85); display: none; justify-content: center; align-items: center; z-index: 10; border-radius: 12px; font-size: 1.2rem; font-weight: 500; color: #1a3b5d; }
+        .loader.active { display: flex; }
+        .methodology-section ul, .reality-check-section ul { padding-left: 0; list-style-type: none; }
+        .methodology-section li, .reality-check-section li { margin-bottom: 15px; position: relative; padding-left: 25px; }
+        .methodology-section .sub-heading, .reality-check-section .sub-heading { font-weight: 700; color: #0056b3; margin-top: 20px; display: block; }
+        .reality-check-section li::before { content: '💡'; position: absolute; left: 0; font-size: 1.2em; }
+        .help-icon { margin-left: 5px; color: #007bff; cursor: pointer; font-size: 0.9em; }
+        #tooltip { position: absolute; background-color: #333; color: #fff; padding: 10px 15px; border-radius: 5px; z-index: 999; font-size: 0.9rem; max-width: 300px; display: none; }
+        #comparison-section { display: none; }
+        .comparison-table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        .comparison-table th, .comparison-table td { padding: 12px 15px; border: 1px solid #dee2e6; text-align: center; }
+        .comparison-table th { background-color: #f8f9fa; font-weight: 500; }
+        .comparison-table .header-row th { background-color: #e9ecef; font-weight: 700; }
+        .comparison-table .label-col { text-align: left; font-weight: 500; }
+
+        /* ****** START: MODIFIED CSS FOR '市场规模与竞争评估' ****** */
+        .result-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; }
+        .stat-card { background-color: #f8f9fa; border: 1px solid #e9ecef; border-radius: 10px; padding: 20px; text-align: left; display: flex; flex-direction: column; transition: all 0.2s ease-in-out; }
+        .stat-card:hover { transform: translateY(-5px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .stat-card-header { display: flex; align-items: center; margin-bottom: 15px; }
+        .stat-card-header i { font-size: 1.5rem; margin-right: 15px; width: 30px; text-align: center; }
+        .result-card-title { font-weight: 500; color: #5a7b9d; font-size: 1rem; }
+        .result-card-value { font-size: 2.3rem; font-weight: 700; line-height: 1.1; margin-bottom: 10px; color: #1a3b5d; }
+        .result-card-desc { font-size: 0.85rem; color: #6c757d; flex-grow: 1; }
+        .stat-card .fa-users { color: #007bff; }
+        .stat-card .fa-heart-pulse { color: #6f42c1; }
+        .stat-card .fa-handshake-simple { color: #28a745; }
+        .stat-card .fa-gauge-high { color: #d9534f; }
+        /* ****** END: MODIFIED CSS ****** */
+
+        @media (max-width: 1200px) { .container { flex-direction: column; } .form-section { position: static; max-width: none; } }
+        @media (max-width: 768px) {
+            .container { padding: 0 15px; margin: 15px auto; gap: 20px;}
+            .form-section, .result-box { padding: 20px; }
+            h1 { font-size: 1.8rem; } h2 { font-size: 1.5rem; }
+            .btn-container { grid-template-columns: 1fr; }
+            .result-grid { grid-template-columns: 1fr; } 
+            .summary-grid, .criteria-list { columns: 1; -webkit-columns: 1; -moz-columns: 1; }
+            .disclaimer { font-size: 1rem; }
+            .result-card-value { font-size: 2rem; }
+
+            /* ****** START: MOBILE UI OPTIMIZATIONS V12.1 ****** */
+            .input-group { flex-direction: column; }
+            .comparison-table thead { display: none; }
+            .comparison-table tr, .comparison-table td { display: block; width: 100%; }
+            .comparison-table tr { margin-bottom: 15px; border: 1px solid #dee2e6; border-radius: 8px; overflow: hidden; }
+            .comparison-table td { text-align: right; padding-left: 50%; position: relative; border: none; border-bottom: 1px solid #e9ecef; }
+            .comparison-table tr td:last-child { border-bottom: none; }
+            .comparison-table td::before {
+                content: attr(data-label);
+                position: absolute;
+                left: 15px;
+                width: calc(50% - 30px);
+                text-align: left;
+                font-weight: 500;
+                color: #5a7b9d;
+            }
+            .comparison-table .label-col { background-color: #f8f9fa; font-weight: 700; text-align: left; padding-left: 15px; }
+            .comparison-table .label-col::before { display: none; }
+            /* ****** END: MOBILE UI OPTIMIZATIONS V12.1 ****** */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <form class="form-section" id="filter-form">
+            <h1><i class="fas fa-chess-queen"></i> 婚恋市场难度评估辅助系统</h1>
+            <p class="subtitle">V12.1 - 移动端优化版</p>
+            <div class="disclaimer">所有结果均为宏观估算，请结合现实理性看待</div>
+            <div id="calc-mode-display" class="calc-mode-display"></div>
+            
+            <label for="province">目标地区</label>
+            <select id="province" name="location"></select>
+            
+            <label for="gender">目标性别</label>
+            <select id="gender" name="gender"><option value="male">男性</option><option value="female">女性</option></select>
+            
+            <label>年龄范围</label>
+            <div class="input-group"><input type="number" id="minAge" name="minAge" placeholder="最小年龄"><input type="number" id="maxAge" name="maxAge" placeholder="最大年龄"></div>
+
+            <label for="maritalStatus">婚姻状况 <i class="fas fa-info-circle help-icon" data-tooltip="此项为重要筛选条件。系统将基于年龄估算各类婚姻状况的人口比例。"></i></label>
+            <select id="maritalStatus" name="maritalStatus">
+                <option value="any">不限</option>
+                <option value="unmarried">仅限未婚</option>
+                <option value="divorced_no_kids">仅限离异(无子女)</option>
+                <option value="divorced_with_kids">仅限离异(有子女)</option>
+                <option value="unmarried_or_divorced">未婚或离异均可</option>
+            </select>
+
+            <label for="education">学历要求</label>
+            <select id="education" name="education"><option value="any">不限</option><option value="college">大专及以上</option><option value="bachelor">本科及以上</option><option value="master">硕士及以上</option></select>
+
+            <label for="height">身高要求 (cm)</label>
+            <select id="height" name="height"><option value="0">不限</option><option value="155">155+</option><option value="160">160+</option><option value="165">165+</option><option value="170">170+</option><option value="175">175+</option><option value="180">180+</option><option value="185">185+</option></select>
+
+            <label for="income">最低月收入 (元) <i class="fas fa-info-circle help-icon" data-tooltip="指个人税前月收入。"></i></label>
+            <select id="income" name="income"><option value="0">不限</option><option value="5000">5000+</option><option value="8000">8000+</option><option value="10000">10000+</option><option value="15000">15000+</option><option value="20000">20000+</option><option value="30000">30000+</option></select>
+
+            <label for="assets">家庭净资产 <i class="fas fa-info-circle help-icon" data-tooltip="指个体原生家庭与本人所拥有资产减去总负债后的总和。"></i></label>
+            <select id="assets" name="assets"><option value="0">不限</option><option value="50">50万+</option><option value="100">100万+</option><option value="200">200万+</option><option value="500">500万+</option><option value="1000">1000万+</option></select>
+            
+            <label for="house">房产要求 <i class="fas fa-info-circle help-icon" data-tooltip="“有房”包含全款与贷款两种情况。"></i></label>
+            <select id="house" name="house"><option value="any">不限</option><option value="owned_any">有房(含贷款)</option><option value="owned_full">有全款房</option></select>
+            
+            <div class="btn-container">
+                <button id="calculateBtn" type="button" class="btn"><i class="fas fa-calculator"></i> 生成报告</button>
+                <button id="saveBtn" type="button" class="btn"><i class="fas fa-save"></i> 保存对比</button>
+                <button id="resetBtn" type="button" class="btn"><i class="fas fa-sync-alt"></i> 重置</button>
+            </div>
+        </form>
+
+        <div class="result-section">
+            <div id="comparison-section" class="result-box">
+                 <h3><i class="fas fa-exchange-alt"></i> 横向对比分析</h3>
+                 <div id="comparison-content"></div>
+            </div>
+        
+            <div class="result-box">
+                <div class="loader" id="loader"><span><i class="fas fa-spinner fa-spin"></i> 正在生成报告...</span></div>
+                <h3><i class="fas fa-file-alt"></i> 分析报告概要</h3>
+                <ul id="criteria-summary" class="criteria-list"></ul>
+            </div>
+
+            <div class="result-box">
+                <h2><i class="fas fa-bullseye"></i> 市场规模与竞争评估 <sup>[1]</sup></h2>
+                <div class="result-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <i class="fas fa-users"></i>
+                            <p class="result-card-title">理论符合总人数</p>
+                        </div>
+                        <p class="result-card-value" id="res-total">0</p>
+                        <p class="result-card-desc">基于您的所有条件，在目标地区理论上存在的人数总量。</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <i class="fas fa-heart-pulse"></i>
+                            <p class="result-card-title">活跃寻缘人数</p>
+                        </div>
+                        <p class="result-card-value" id="res-market">0</p>
+                        <p class="result-card-desc">从理论总人数中，估算出当前正在积极寻找伴侣的人数规模。</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <i class="fas fa-handshake-simple"></i>
+                             <p class="result-card-title">实际匹配池</p>
+                        </div>
+                        <p class="result-card-value" id="res-potential">0</p>
+                        <p class="result-card-desc">活跃人数中，考虑到双向选择、圈层等因素后，您最可能接触的核心人群。</p>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <i class="fas fa-gauge-high"></i>
+                            <p class="result-card-title">竞争指数</p>
+                        </div>
+                        <p class="result-card-value" id="res-competition">--</p>
+                        <p class="result-card-desc">综合评估您的标准严苛程度。指数越高，目标人群选择面越广，难度越大。</p>
+                    </div>
+                </div>
+            </div>
+
+             <div class="result-box">
+                <h3><i class="fas fa-chart-pie"></i> 计算摘要 <sup>[2]</sup></h3>
+                <div class="summary-grid">
+                    <div class="summary-item"><p class="summary-label">目标地区总适龄人口</p><p class="summary-value" id="res-base-pop">0</p></div>
+                    <div class="summary-item"><p class="summary-label">综合筛选通过率</p><p class="summary-value" id="res-pass-rate">0%</p></div>
+                </div>
+             </div>
+
+             <div class="result-box">
+                <h3><i class="fas fa-filter"></i> 各条件筛选强度 (%) <sup>[3]</sup></h3>
+                <div class="chart-container"><canvas id="impactChart"></canvas></div>
+            </div>
+
+            <div class="result-box reality-check-section">
+                <h3><i class="fas fa-street-view"></i> 现实因素与策略建议</h3>
+                <ul>
+                    <li>
+                        <span class="sub-heading">双向选择的现实</span>
+                        报告结果仅为单向筛选。请谨记，您所寻找的“理想型”同样拥有自己的择偶标准。竞争指数越高，意味着目标对象的选择面越广，其对伴侣的要求也相应越苛刻。
+                    </li>
+                     <li>
+                        <span class="sub-heading">社交圈层的壁垒</span>
+                        “理论人数”不等于“可接触人数”。优质人群往往沉淀在特定的工作、生活与社交圈层中。评估您当前的社交半径是否能有效覆盖目标人群，是比数字更重要的问题。
+                    </li>
+                     <li>
+                        <span class="sub-heading">无法量化的隐性因素</span>
+                        模型无法衡量性格、三观、家庭氛围、原生家庭支持度、个人债务等关键“软件”。硬件匹配只是第一步，真正的挑战在于软性因素的磨合。
+                    </li>
+                </ul>
+            </div>
+
+            <div class="result-box">
+                <h3><i class="fas fa-database"></i> 数据来源与方法论</h3>
+                <ul class="methodology-section" id="methodology-section">
+                     <span class="sub-heading">数据来源：</span>
+                     <li><strong>人口与性别比:</strong> 来源于各地统计局发布的《2023年国民经济和社会发展统计公报》。</li>
+                     <li><strong>学历结构:</strong> 来源于国家统计局《第七次全国人口普查公报》(2020年)，这是目前最权威的人口教育背景数据。</li>
+                     <li><strong>收入/资产/房产/身高分布:</strong> 由于官方未发布此类细粒度交叉数据，本工具沿用基于公开数据和经济学趋势建立的**分层概率模型**进行估算。这并非原始数据，而是为了模拟真实社会中“高学历者有更大概率获得高收入”等关联现象。</li>
+                    
+                     <span class="sub-heading">核心方法论：</span>
+                     <li><sup>[1]</sup> <strong>Persona Cohort Model (人群画像分层模型)</strong><br>基于“学历”将人口预先分层，每个学历群体拥有独立的属性分布，从根本上保证了计算的可靠性。</li>
+                     <li><sup>[2]</sup> <strong>Graduated Conditional Probability (阶梯式条件概率)</strong><br>模型能够智能识别变量间的内在关联（如高资产与高房产概率），避免了对优秀个体的“惩罚性叠加”筛选。</li>
+                     <li><sup>[3]</sup> <strong>Marginal Impact Analysis (边际影响分析)</strong><br>通过独立计算每个条件的“边际影响”，清晰展示哪个条件最严苛，使得模型结果可解释、可归因。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+<div id="tooltip"></div>
+
+<script>
+// The Javascript content has been slightly modified to handle the responsive table.
+document.addEventListener('DOMContentLoaded', function() {
+    const getEl = (id) => document.getElementById(id);
+    let impactChart = null;
+    let savedResultForComparison = null;
+
+    // Database object remains the same...
+    const db = {
+        locations: {
+            "北京市":{p:2185,g:101.9,e:{m:0.076,b:0.344,c:0.191,o:0.389}}, "上海市":{p:2487,g:105.5,e:{m:0.058,b:0.286,c:0.211,o:0.445}},
+            "广州市":{p:1882,g:111.6,e:{m:0.033,b:0.237,c:0.264,o:0.466}}, "深圳市":{p:1779,g:115.7,e:{m:0.039,b:0.288,c:0.267,o:0.406}},
+            "杭州市":{p:1252,g:107.5,e:{m:0.037,b:0.268,c:0.245,o:0.450}}, "南京市":{p:954, g:105.8,e:{m:0.054,b:0.291,c:0.211,o:0.444}},
+            "苏州市":{p:1295,g:107.1,e:{m:0.019,b:0.180,c:0.252,o:0.549}}, "成都市":{p:2140,g:103.5,e:{m:0.027,b:0.218,c:0.261,o:0.494}},
+            "重庆市":{p:3213,g:102.4,e:{m:0.015,b:0.143,c:0.207,o:0.635}}, "武汉市":{p:1377,g:106.3,e:{m:0.036,b:0.245,c:0.247,o:0.472}},
+            "西安市":{p:1307,g:104.9,e:{m:0.039,b:0.247,c:0.239,o:0.475}}, "长沙市":{p:1055,g:104.2,e:{m:0.029,b:0.219,c:0.272,o:0.480}},
+            "郑州市":{p:1300,g:100.9,e:{m:0.018,b:0.170,c:0.263,o:0.549}}, "青岛市":{p:1037,g:101.3,e:{m:0.023,b:0.176,c:0.235,o:0.566}},
+            "合肥市":{p:985, g:106.1,e:{m:0.029,b:0.198,c:0.222,o:0.551}}, "福州市":{p:846, g:106.9,e:{m:0.022,b:0.172,c:0.217,o:0.589}}
+        },
+        personas: {
+            master:   { n: "硕士+", i: v => v > 0 ? Math.exp(-((v / 35000)**1.8)) : 1, a: v => v > 0 ? Math.exp(-((v / 400)**1.5)) : 1, h: v => v==='any'?1:v==='owned_any'?0.80:0.45},
+            bachelor: { n: "本科",  i: v => v > 0 ? Math.exp(-((v / 18000)**1.5)) : 1, a: v => v > 0 ? Math.exp(-((v / 150)**1.5)) : 1, h: v => v==='any'?1:v==='owned_any'?0.65:0.25},
+            college:  { n: "大专",  i: v => v > 0 ? Math.exp(-((v / 9000)**1.3)) : 1,  a: v => v > 0 ? Math.exp(-((v / 60)**1.3))  : 1, h: v => v==='any'?1:v==='owned_any'?0.50:0.12},
+            other:    { n: "高中+", i: v => v > 0 ? Math.exp(-((v / 6000)**1.2)) : 1,  a: v => v > 0 ? Math.exp(-((v / 30)**1.2))  : 1, h: v => v==='any'?1:v==='owned_any'?0.40:0.08}
+        },
+        heightDist: { male: {155:0.99,160:0.95,165:0.82,170:0.55,175:0.25,180:0.08,185:0.02}, female: {155:0.75,160:0.45,165:0.18,170:0.05,175:0.01,180:0.001} },
+        filterLabels: { maritalStatus: "婚姻状况", education: "学历", height: "身高", income: "收入", assets: "资产", house: "房产" },
+        universalProb: { 
+            income: v => v > 0 ? Math.exp(-((v/10000)**1.4)) * 0.5 : 1,
+            assets: v => v > 0 ? Math.exp(-((v/80)**1.3)) * 0.5 : 1
+        }
+    };
+    
+    const defaultInputs = { location: '成都市', gender: 'male', minAge: 28, maxAge: 35, maritalStatus: 'unmarried', education: 'bachelor', height: '170', income: '10000', assets: '100', house: 'owned_any' };
+
+    const elements = {
+        form: getEl('filter-form'), province: getEl('province'), loader: getEl('loader'), calcModeDisplay: getEl('calc-mode-display'),
+        resTotal: getEl('res-total'), resMarket: getEl('res-market'), resPotential: getEl('res-potential'), resCompetition: getEl('res-competition'),
+        resBasePop: getEl('res-base-pop'), resPassRate: getEl('res-pass-rate'),
+        impactChartCanvas: getEl('impactChart'), criteriaSummary: getEl('criteria-summary'),
+        calculateBtn: getEl('calculateBtn'), resetBtn: getEl('resetBtn'), saveBtn: getEl('saveBtn'),
+        tooltip: getEl('tooltip'), comparisonSection: getEl('comparison-section'), comparisonContent: getEl('comparison-content')
+    };
+
+    function init() {
+        Object.keys(db.locations).forEach(loc => elements.province.add(new Option(loc, loc)));
+        elements.calculateBtn.addEventListener('click', () => handleCalculate(false));
+        elements.saveBtn.addEventListener('click', () => handleCalculate(true));
+        elements.resetBtn.addEventListener('click', resetForm);
+        setupTooltips();
+        resetForm(true); 
+    }
+
+    function resetForm(isInitialLoad = false) {
+        Object.keys(defaultInputs).forEach(key => {
+            if (key === 'minAge' || key === 'maxAge') {
+                 elements.form.elements[key].value = defaultInputs[key];
+                 return;
+            }
+            const el = elements.form.elements[key];
+            if (el) {
+                if (el.options) {
+                    el.value = defaultInputs[key];
+                }
+            }
+        });
+        savedResultForComparison = null;
+        elements.comparisonSection.style.display = 'none';
+        elements.saveBtn.disabled = false;
+        elements.saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存对比';
+        if (!isInitialLoad) {
+            handleCalculate(false, true); 
+        }
+    }
+    
+    // ... all calculation functions like getUnmarriedRate, calculatePopulation etc remain the same ...
+     function getUnmarriedRate(age) { if (age <= 25) return 0.90; if (age <= 30) return 0.60; if (age <= 35) return 0.30; if (age <= 40) return 0.15; return 0.08; }
+    function getDivorceRate(age) { if (age <= 30) return 0.03; if (age <= 35) return 0.06; if (age <= 40) return 0.08; if (age <= 50) return 0.12; return 0.10; }
+    function getDynamicRatios(passRate) { if (passRate >= 0.05) { return { activeRate: 0.5, matchRate: 0.30 }; } else if (passRate >= 0.01) { return { activeRate: 0.4, matchRate: 0.25 }; } else if (passRate >= 0.001) { return { activeRate: 0.3, matchRate: 0.15 }; } else { return { activeRate: 0.2, matchRate: 0.10 }; } }
+    function getCompetitionIndex(passRate) { if (passRate >= 0.05) return { label: "中等", color: '#28a745' }; if (passRate >= 0.01) return { label: "较高", color: '#5bc0de' }; if (passRate >= 0.005) return { label: "困难", color: '#f0ad4e' }; if (passRate >= 0.001) return { label: "极难", color: '#d9534f' }; return { label: "地狱", color: '#8e44ad' }; }
+    let outlierModeActive = false, potentialModeActive = false;
+    function calculatePopulation(inputs) { let totalEligible = 0, basePopulation = 0; outlierModeActive = false; potentialModeActive = false; const loc = db.locations[inputs.location]; const agePopRatioPerYear = 0.014; const totalGenderRatio = 100 + loc.g; const maleRatio = loc.g / totalGenderRatio; const femaleRatio = 100 / totalGenderRatio; for (let age = inputs.minAge; age <= inputs.maxAge; age++) { let basePopForAge = loc.p * 10000 * agePopRatioPerYear; let maritalStatusModifier = 1.0; const unmarriedRate = getUnmarriedRate(age); const divorcedRate = getDivorceRate(age); const divorcedNoKidsRate = divorcedRate * 0.4; const divorcedWithKidsRate = divorcedRate * 0.6; switch(inputs.maritalStatus) { case 'unmarried': maritalStatusModifier = unmarriedRate; break; case 'divorced_no_kids': maritalStatusModifier = divorcedNoKidsRate; break; case 'divorced_with_kids': maritalStatusModifier = divorcedWithKidsRate; break; case 'unmarried_or_divorced': maritalStatusModifier = unmarriedRate + divorcedRate; break; case 'any': default: maritalStatusModifier = 1.0; break; } basePopForAge *= maritalStatusModifier; const basePopGendered = basePopForAge * (inputs.gender === 'male' ? maleRatio : femaleRatio); basePopulation += basePopGendered; let eligibleFromAge = 0; for (const key in db.personas) { const eduPass = (inputs.education === 'any') || (inputs.education === 'college' && ['c','b','m'].includes(key[0])) || (inputs.education === 'bachelor' && ['b','m'].includes(key[0])) || (inputs.education === 'master' && key[0] === 'm'); if (!eduPass) continue; const p = db.personas[key]; let adjustedIncome = inputs.income; if (inputs.income >= 15000 && age < 30) { potentialModeActive = true; adjustedIncome = inputs.income * (1 - ((30 - age) * 0.1)); } const incomeIsOutlier = (key === 'master' && adjustedIncome < 10000 && adjustedIncome > 0) || (key === 'bachelor' && adjustedIncome < 6000 && adjustedIncome > 0); const assetsIsOutlier = (key === 'other' && inputs.assets >= 500) || (key === 'college' && inputs.assets >= 1000); if (incomeIsOutlier || assetsIsOutlier) outlierModeActive = true; const p_income = incomeIsOutlier ? db.universalProb.income(adjustedIncome) : p.i(adjustedIncome); const p_assets = assetsIsOutlier ? db.universalProb.assets(inputs.assets) : p.a(inputs.assets); let p_house; if (inputs.assets >= 500) { p_house = inputs.house === 'any' ? 1 : inputs.house === 'owned_any' ? 0.98 : 0.85; } else if (inputs.assets >= 200) { p_house = inputs.house === 'any' ? 1 : inputs.house === 'owned_any' ? 0.95 : 0.75; } else if (inputs.assets >= 100) { p_house = inputs.house === 'any' ? 1 : inputs.house === 'owned_any' ? 0.88 : 0.60; } else { p_house = p.h(inputs.house); } const p_height = inputs.height > 0 ? (db.heightDist[inputs.gender]?.[inputs.height] || 0) : 1; const passRate = p_income * p_assets * p_house * p_height; eligibleFromAge += basePopGendered * (loc.e[key[0]] || 0) * passRate; } totalEligible += eligibleFromAge; } return { total: totalEligible, base: basePopulation }; }
+    
+    function handleCalculate(isSavingForComparison, isResetting = false) {
+        if (!isResetting) {
+             elements.loader.classList.add('active');
+        }
+        setTimeout(() => {
+            const inputs = {};
+            const formElements = elements.form.elements;
+            for (const el of formElements) {
+                if (el.name) {
+                     if (['minAge', 'maxAge'].includes(el.id)) {
+                        inputs[el.name] = parseInt(el.value, 10);
+                     } else if (['height', 'income', 'assets'].includes(el.name)) {
+                        inputs[el.name] = parseInt(el.value, 10) || 0;
+                    } else {
+                        inputs[el.name] = el.value;
+                    }
+                }
+            }
+            inputs.displayValues = getDisplayValues(formElements);
+
+            const { total: totalResult, base: basePopulation } = calculatePopulation(inputs);
+            const passRate = basePopulation > 0 ? totalResult / basePopulation : 0;
+            const dynamicRatios = getDynamicRatios(passRate);
+            const marketSize = totalResult * dynamicRatios.activeRate;
+            const potentialPool = marketSize * dynamicRatios.matchRate;
+
+            const impacts = [];
+            const activeFilters = Object.keys(db.filterLabels).filter(key => inputs[key] !== 'any' && inputs[key] !== 0);
+
+            activeFilters.forEach(key => {
+                const tempInputs = {...inputs, [key]: (typeof inputs[key] === 'string' ? 'any' : 0)};
+                const { total: resultWithoutFilter } = calculatePopulation(tempInputs);
+                const passRateForImpact = resultWithoutFilter > 0 ? totalResult / resultWithoutFilter : 0;
+                impacts.push({ label: db.filterLabels[key], strength: (1 - passRateForImpact) * 100 });
+            });
+            
+            const currentResult = {
+                total: totalResult, market: marketSize, potential: potentialPool,
+                competition: getCompetitionIndex(passRate), impacts: impacts,
+                basePop: basePopulation, passRate: passRate, inputs: inputs
+            };
+            
+            if (isSavingForComparison) {
+                savedResultForComparison = currentResult;
+                elements.saveBtn.disabled = true;
+                elements.saveBtn.innerHTML = '<i class="fas fa-check"></i> 已保存';
+            } else if (savedResultForComparison) {
+                renderComparison(savedResultForComparison, currentResult);
+                savedResultForComparison = null; 
+                elements.saveBtn.disabled = false;
+                elements.saveBtn.innerHTML = '<i class="fas fa-save"></i> 保存对比';
+            }
+            
+            updateUI(currentResult);
+            elements.loader.classList.remove('active');
+        }, 50);
+    }
+    
+    function getDisplayValues(formElements) {
+        const displayValues = {};
+         for (const el of formElements) {
+            if (el.name && el.value && el.value !== 'any' && el.value !== '0' && !['minAge', 'maxAge'].includes(el.id)) {
+                 const labelEl = document.querySelector(`label[for=${el.id}]`);
+                 const labelText = labelEl ? labelEl.innerText.trim() : el.name;
+                 const valueText = el.options ? el.options[el.selectedIndex].text : el.value;
+                 displayValues[labelText] = valueText;
+            }
+         }
+         displayValues['年龄'] = `${formElements.minAge.value} - ${formElements.maxAge.value} 岁`;
+         return displayValues;
+    }
+
+    function renderComparison(result1, result2) {
+        const r1_inputs = result1.inputs.displayValues;
+        const r2_inputs = result2.inputs.displayValues;
+        const allKeys = [...new Set([...Object.keys(r1_inputs), ...Object.keys(r2_inputs)])];
+        
+        // This function now adds "data-label" attributes for the responsive CSS to work
+        const renderRow = (label, val1, val2, isHeader = false) => {
+            if(isHeader) {
+                 return `<tr class="header-row"><th colspan="3">${label}</th></tr>`;
+            }
+            const highlight = val1 !== val2 ? 'style="background-color: #fff8e1;"' : '';
+            return `
+                <tr ${highlight}>
+                    <td data-label="指标" class="label-col">${label}</td>
+                    <td data-label="对比项 1">${val1}</td>
+                    <td data-label="对比项 2">${val2}</td>
+                </tr>`;
+        };
+        
+        let criteriaRows = '';
+        allKeys.forEach(key => {
+            const val1 = r1_inputs[key] || '不限';
+            const val2 = r2_inputs[key] || '不限';
+            criteriaRows += renderRow(key, val1, val2);
+        });
+        
+        const html = `
+            <table class="comparison-table">
+                <thead>
+                    <tr class="header-row"><th>指标</th><th>对比项 1</th><th>对比项 2</th></tr>
+                </thead>
+                <tbody>
+                    ${renderRow("理论符合总人数", formatNumber(result1.total), formatNumber(result2.total))}
+                    ${renderRow("活跃寻缘人数", formatNumber(result1.market), formatNumber(result2.market))}
+                    ${renderRow("实际匹配池", formatNumber(result1.potential), formatNumber(result2.potential))}
+                    ${renderRow("竞争指数", `<span style="color:${result1.competition.color}; font-weight:bold;">${result1.competition.label}</span>`, `<span style="color:${result2.competition.color}; font-weight:bold;">${result2.competition.label}</span>`)}
+                    ${renderRow("综合筛选通过率", `${(result1.passRate * 100).toFixed(3)}%`, `${(result2.passRate * 100).toFixed(3)}%`)}
+                    ${renderRow("筛选条件对比", null, null, true)}
+                    ${criteriaRows}
+                </tbody>
+            </table>
+        `;
+        elements.comparisonContent.innerHTML = html;
+        elements.comparisonSection.style.display = 'block';
+        elements.comparisonSection.scrollIntoView({ behavior: 'smooth' });
+    }
+    
+    // ... all other functions like formatNumber, renderImpactChart, updateUI, setupTooltips remain the same ...
+    function formatNumber(num) { const n = Math.round(num); if (n < 10) return "&lt;10 人"; if (n >= 10000) return `约 ${(n / 10000).toFixed(2)} 万人`; return `约 ${n.toLocaleString('en-US')} 人`; }
+    function renderImpactChart(impacts) { const sorted = impacts.sort((a,b) => b.strength - a.strength); const labels = sorted.map(i => i.label); const data = sorted.map(i => i.strength); const backgroundColors = data.map(s => s > 70 ? 'rgba(217,83,79,0.7)' : s > 40 ? 'rgba(240,173,78,0.7)' : 'rgba(92,184,92,0.7)'); if (impactChart) impactChart.destroy(); impactChart = new Chart(elements.impactChartCanvas, { type: 'bar', data: { labels, datasets: [{ label: '筛选强度 (%)', data: data, backgroundColor: backgroundColors }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => `筛选强度: ${c.raw.toFixed(1)}%` } } }, scales: { x: { beginAtZero: true, max: 100, ticks: { callback: (v) => v + '%' } } } } }); }
+    function updateUI(result) { elements.resTotal.textContent = formatNumber(result.total); elements.resMarket.textContent = formatNumber(result.market); elements.resPotential.textContent = formatNumber(result.potential); elements.resCompetition.textContent = result.competition.label; elements.resCompetition.style.color = result.competition.color; elements.resBasePop.textContent = formatNumber(result.basePop); elements.resPassRate.textContent = `${(result.passRate * 100).toFixed(3)}%`; let summaryHTML = ''; Object.entries(result.inputs.displayValues).forEach(([key, value]) => { summaryHTML += `<li><strong>${key}:</strong> ${value}</li>`; }); elements.criteriaSummary.innerHTML = summaryHTML; let modeText = ''; if(outlierModeActive) modeText += '检测到非典型画像，已启用离群值分析。'; if(potentialModeActive) modeText += '检测到高收入与年轻组合，已启用潜力加权。'; elements.calcModeDisplay.style.display = modeText ? 'block' : 'none'; elements.calcModeDisplay.textContent = modeText; renderImpactChart(result.impacts); }
+    function setupTooltips() { document.body.addEventListener('mouseover', e => { if (e.target.classList.contains('help-icon')) { elements.tooltip.innerHTML = e.target.dataset.tooltip; elements.tooltip.style.display = 'block'; document.body.appendChild(elements.tooltip); const rect = e.target.getBoundingClientRect(); elements.tooltip.style.left = `${rect.left + window.scrollX}px`; elements.tooltip.style.top = `${rect.top + window.scrollY - elements.tooltip.offsetHeight - 5}px`; } }); document.body.addEventListener('mouseout', e => { if (e.target.classList.contains('help-icon')) { elements.tooltip.style.display = 'none'; } }); }
+
+    init();
+});
+</script>
+</body>
+</html>```
