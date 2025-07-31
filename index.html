@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>欧会杯外围赛决策情报中心 V6.2</title>
+    <title>欧会杯外围赛决策情报中心 V6.3</title>
     <style>
         :root {
             --primary-color: #1a2a45; --secondary-color: #005A9C; --accent-color: #2196F3;
@@ -90,7 +90,7 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>欧会杯外围赛决策情报中心 V6.2</h1>
+        <h1>欧会杯外围赛决策情报中心 V6.3</h1>
         <p id="generation-time">数据生成于: 2025年7月31日 15:30</p>
     </div>
     <div class="match-grid">
@@ -129,7 +129,17 @@
     </div>
 </div>
 
-<div id="qrModal" class="qr-modal"> ... </div>
+<div id="qrModal" class="qr-modal">
+    <div class="qr-modal-content">
+        <span class="close-btn" onclick="closeQrModal()">×</span>
+        <h3 style="margin-top:0; color: var(--primary-color);">关注我们 获取更多情报</h3>
+        <p style="font-size:14px; color: var(--text-light-color); margin-bottom: 15px;">长按或截图二维码，在微信中识别</p>
+        <img src="https://i.mji.rip/2025/07/31/9435fe230c6ac52fc49896d56277e729.jpeg" alt="金球大树 二维码" style="width: 200px; max-width: 100%; border-radius: 8px;">
+        <p style="font-size:14px; color: var(--text-light-color); margin-top: 15px;">或</p>
+        <button id="copyBtn" class="copy-button">一键复制公众号名称</button>
+        <p id="copyFeedback" class="copy-feedback">已复制！</p>
+    </div>
+</div>
 <div class="scientific-statement"> ... </div>
 <div class="disclaimer"> ... </div>
 
@@ -146,7 +156,25 @@
         }, 50);
     }
     function closeModal(modalId) { document.getElementById(modalId).style.display = 'none'; }
-    window.onclick = function(event) { if (event.target.classList.contains('modal') || event.target.classList.contains('qr-modal')) { event.target.style.display = 'none'; } }
+    
+    const qrModal = document.getElementById('qrModal');
+    function openQrModal() { qrModal.style.display = 'block'; }
+    function closeQrModal() { qrModal.style.display = 'none'; }
+    
+    const copyBtn = document.getElementById('copyBtn');
+    const copyFeedback = document.getElementById('copyFeedback');
+    copyBtn.addEventListener('click', () => {
+        const accountName = "金球大树";
+        navigator.clipboard.writeText(accountName).then(() => {
+            copyFeedback.style.display = 'block';
+            setTimeout(() => { copyFeedback.style.display = 'none'; }, 2000);
+        });
+    });
+
+    window.onclick = function(event) { 
+        if (event.target.classList.contains('modal')) { event.target.style.display = 'none'; }
+        if (event.target.classList.contains('qr-modal')) { closeQrModal(); }
+    }
     
     const annotationHTML = `<div class="annotation"><h4>研判过程注释</h4><p><strong>双核分析引擎如何工作:</strong> 本预测由两大并行的模型驱动。</p><ul><li><strong>核心预测模型:</strong> 通过学习球队的预期进球(xG)/失球(xGA)、控球率、射门效率等多维度“DNA数据”，产出一个基于球队长期实力的“基准胜平负概率”。</li><li><strong>风险探测模型:</strong> 专注于识别风险。它会分析市场赔率的悬殊度、球队近期赛果是否超越其xG表现(均值回归信号)、伤病停赛、赛程密度等“风险因子”，给出一个0-100的“风险指数”。</li></ul><p><strong>盘口分析哲学:</strong> 我们不让赔率“决定”预测，而是用它来“衡量”预测的价值。当我们的模型概率显著高于赔率换算出的市场概率时，就意味着发现了潜在的“价值”空间。这个价值差异也是风险探测模型的重要输入之一。</p><hr style="border:none; border-top:1px solid #ddd; margin: 15px 0;"><h4 style="color:#C62828;">模型的局限性与重要声明</h4><ul><li style="margin-bottom:10px;">我们的模型旨在识别并量化比赛中的高概率趋势，而非精准预测每一次的赛果。对于“爆冷”这类小概率事件，风险探测模型的作用是发出‘高危预警’，提示用户潜在的巨大不确定性，而非保证能预测到其必然发生。</li><li>本工具提供的所有数据、分析和预测仅供参考和娱乐，是基于历史数据和统计模型的运算结果，并不代表对未来赛果的任何保证。足球比赛充满不确定性，请用户独立思考、理性判断。本工具内容不构成任何形式的投资或投注建议，用户基于此信息做出的任何决策，后果自负。请勿将此工具用于任何非法用途。</li></ul></div>`;
     
@@ -187,8 +215,6 @@
             }
         });
     }
-
-    // QR Modal and other JS functions are assumed to be here, complete and correct.
 </script>
 </body>
 </html>
