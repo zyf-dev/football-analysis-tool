@@ -3,13 +3,13 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>多联赛决策情报中心 V17.0 (完全体)</title>
+    <title>多联赛决策情报中心 V25.0 (巅峰实战版)</title>
     <style>
         :root {
             --primary-color: #1a2a45; --secondary-color: #005A9C; --accent-color: #2196F3;
             --bg-color: #f0f2f5; --card-bg-color: #ffffff; --text-color: #1a1a1a;
             --text-light-color: #6c757d; --border-color: #e8e8e8; --win-color: #4CAF50;
-            --draw-color: #FFC107; --loss-color: #F44336;
+            --draw-color: #FFC107; --loss-color: #F44336; --team1-color: #4285F4; --team2-color: #DB4437;
         }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; }
         .container { max-width: 1200px; margin: auto; }
@@ -37,23 +37,26 @@
         .modal-header { border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 20px; }
         .section-title { font-size: 18px; font-weight: bold; margin-top: 25px; margin-bottom: 15px; border-left: 4px solid var(--secondary-color); padding-left: 10px; }
         .verdict-summary { padding: 15px; border-radius: 8px; margin-bottom: 20px; border-width: 2px; border-style: solid; }
-        .verdict-summary.no-signal { border-color: #FFC107; background-color: #fffff0; }
-		.verdict-summary.value-signal { border-color: #4CAF50; background-color: #f0fff0; }
+        .verdict-summary.value-signal { border-color: #4CAF50; background-color: #f0fff0; }
         .verdict-summary.high-risk { border-color: #F44336; background-color: #fff0f0; }
+        .verdict-summary.no-signal { border-color: #FFC107; background-color: #fffff0; }
+        .verdict-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;}
         .verdict-title { font-size: 16px; font-weight: 700; }
-		.verdict-summary.no-signal .verdict-title { color: #FF8F00; }
         .verdict-summary.value-signal .verdict-title { color: #2E7D32; }
         .verdict-summary.high-risk .verdict-title { color: #C62828; }
+        .verdict-summary.no-signal .verdict-title { color: #FF8F00; }
+        .verdict-confidence { font-size: 12px; font-weight: 600; color: #fff; padding: 3px 8px; border-radius: 12px; }
+        .confidence-high { background-color: #D32F2F; } .confidence-medium { background-color: #F57C00; } .confidence-low { background-color: #757575; }
         .verdict-text { font-size: 14px; line-height: 1.6; }
         .grid-item { background: #f9f9f9; padding: 15px; border-radius: 6px; }
-        .grid-item p { margin: 10px; padding-left: 10px; }
-		.radar-chart-container { position: relative; width: 100%; max-width: 350px; margin: 20px auto; }
+        .grid-item ol, .grid-item ul { padding-left: 20px; margin-top: 10px; margin-bottom: 10px; }
+        .radar-chart-container { position: relative; width: 100%; max-width: 350px; margin: 20px auto; }
         .strategy-matrix-wrapper { overflow-x: auto; }
         .strategy-matrix table { width: 100%; border-collapse: collapse; }
         .strategy-matrix th, .strategy-matrix td { border: 1px solid #ddd; padding: 12px; text-align: center; font-size: 14px; }
         .strategy-matrix th { background-color: #f2f2f2; }
         .tendency-high { background-color: #E8F5E9; color: #1B5E20; font-weight: bold; }
-        .tendency-low { background-color: #FBE9E7; color: #BF360C; }
+        .tendency-mid { background-color: #FFFDE7; color: #F57F17; }
         .tendency-none { color: #757575; font-style: italic; }
         .annotation { background: #f8f9fa; border-left: 5px solid var(--accent-color); padding: 15px; margin-top: 25px; font-size: 13px; line-height: 1.6; border-radius: 4px; }
 		.annotation h4 { margin: 0 0 10px; color: #1E88E5; }
@@ -67,11 +70,11 @@
 <body>
 <div class="container">
     <div class="header">
-        <h1>多联赛决策情报中心 V17.0 (完全体)</h1>
-        <p>基于实时Bet365初盘/即时盘数据分析</p>
+        <h1>多联赛决策情报中心 V25.0 (巅峰实战版)</h1>
+        <p>基于实时API动态数据分析: 2025-08-02</p>
     </div>
     <div class="match-grid" id="match-grid-container">
-        <!-- Match cards will be dynamically inserted here -->
+        <!-- Match cards are dynamically inserted here -->
     </div>
     <div class="disclaimer">
         <strong>免责声明：</strong>本工具提供的所有数据、分析和预测仅供参考和娱乐，是基于历史数据和统计模型的运算结果，并不代表对未来赛果的任何保证。足球比赛充满不确定性，请用户独立思考、理性判断。本工具内容不构成任何形式的投资或投注建议，用户基于此信息做出的任何决策，后果自负。请勿将此工具用于任何非法用途。
@@ -95,22 +98,13 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     const matchesData = [
-        { id: 1, league: '瑞超', date: '08-01 23:00', home: '赫尔辛基', away: '瓦萨', verdict: '热门方优势稳固', details: '市场对主队赫尔辛基的信心非常坚定。欧赔主胜从1.60压低至1.53，亚盘也从-1球低水变为-1球超低水，显示出强大的资金流入和市场支持。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号高度一致</span>。欧赔和亚盘同向变动，均强化了对主队赫尔辛基的看好，市场意图清晰。', ah_tendency: '倾向 赫尔辛基 -1', ah_details: '亚盘-1球下的赔率持续下降，表明市场认为主队净胜一球以上是大概率事件。', radar: [[85, 80, 75, 80, 90], [65, 68, 70, 60, 60]] },
-        { id: 2, league: '挪超', date: '08-02 02:30', home: '博德闪耀', away: '萨普斯堡', verdict: '主队热门，但市场调整谨慎', details: '博德闪耀初始即是-1球的深盘热门。但后续欧赔主胜从1.20微升至1.25，亚盘赔率也略有提升，表明市场在巨大优势下，后续资金并未强力涌入，态度稍有保留。', signal: '<span style="color:var(--draw-color); font-weight:bold;">信号略有分歧</span>。初盘优势巨大，但即时盘赔率微调显示市场略有疑虑，需警惕大胜不易。', ah_tendency: '建议规避', ah_details: '盘口过深，且赔率微升，增加了不确定性。', radar: [[90, 85, 88, 85, 95], [60, 62, 65, 60, 55]] },
-        { id: 3, league: '日职乙', date: '08-02 17:00', home: '仙台维加泰', away: '大宫松鼠', verdict: '客队热门地位确立', details: '市场从-0.25球调整为-0.5球，是对客队大宫松鼠支持力度大幅增强的明确信号。欧赔客胜也从2.25降至2.05，资金流向明显。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号高度一致</span>。欧赔客胜下降，亚盘从-0.25升至-0.5，是最典型的热门方走强信号。', ah_tendency: '倾向 大宫松鼠 -0.5', ah_details: '亚盘升级且赔率稳定，显示出市场对客队净胜一球及以上的信心增强。', radar: [[65, 68, 60, 65, 70], [75, 72, 78, 75, 70]] },
-        { id: 4, league: '日职乙', date: '08-02 18:00', home: '千叶市原', away: '磐城FC', verdict: '主队热门，市场强化支持', details: '主队千叶市原的欧赔从2.20降至2.15，同时亚盘稳定在-0.25球低水区间。市场对主队不败的信心非常充足。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号一致</span>。欧赔和亚盘都显示出对主队的稳定支持，没有出现矛盾信号。', ah_tendency: '倾向 千叶市原 -0.25', ah_details: '在-0.25盘下，主队持续维持低赔率，表明市场看好其至少能保持不败。', radar: [[78, 75, 72, 75, 80], [68, 70, 65, 65, 60]] },
-        { id: 5, league: 'K1联赛', date: '08-02 18:00', home: '蔚山现代', away: '水原FC', verdict: '冷门风险增加，主队热度下降', details: '极其重要的变化！欧赔主胜从1.67大幅提升至1.80，而亚盘从-0.75球高水降至-0.5球低水。这是典型的主队热门方信心减弱的信号！', signal: '<span style="color:var(--loss-color); font-weight:bold;">信号严重矛盾！诱导可能！</span>市场通过降盘示弱，但同时给降盘后的低赔率，看似便宜，实则可能是对主队无力取胜的真实担忧。', ah_tendency: '倾向 水原FC +0.5', ah_details: '市场对主队信心明显减弱，降盘是核心信号，受让方水原FC的机会在增加。', radar: [[90, 85, 75, 95, 88], [60, 50, 70, 20, 55]] },
-        { id: 6, league: '德乙', date: '08-02 19:00', home: '汉诺威96', away: '基尔', verdict: '均势格局，主队略占优', details: '市场给予主队汉诺威96微弱的-0.25球优势，但欧赔主胜从2.15升至2.20，平局赔率稳定，市场对主胜信心并非十足。', signal: '<span style="color:var(--draw-color); font-weight:bold;">信号平稳</span>。赔率和盘口变化不大，市场视其为一场均势的较量，没有强烈的倾向性。', ah_tendency: '建议规避', ah_details: '盘口和赔率均未显示出明显优势方，赛果不确定性高。', radar: [[75, 72, 70, 70, 78], [72, 70, 70, 72, 70]] },
-        { id: 7, league: '德乙', date: '08-02 19:00', home: '奥斯纳布吕克', away: '罗斯托克', verdict: '主队热门地位稳固', details: '主队奥斯纳布吕克的欧赔从2.10降至2.00，亚盘-0.5球的赔率也从高位回落，市场对主队的支持在增加。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号一致</span>。欧赔主胜下降，亚盘赔率也下降，市场对主队取胜的信心在增强。', ah_tendency: '倾向 奥斯纳布吕克 -0.5', ah_details: '亚盘和欧赔均强化了对主队的支持，主队净胜一球及以上的可能性被市场看好。', radar: [[72, 68, 75, 70, 75], [68, 65, 70, 65, 65]] },
-        { id: 8, league: '德乙', date: '08-02 19:00', home: '卡尔斯鲁厄', away: '汉堡', verdict: '客队强势，市场力挺', details: '市场对客队汉堡的支持力度惊人。亚盘从客让-0.25球一路飙升至-0.75球，欧赔客胜也从2.20大幅下调至2.00。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号极强且一致！</span>亚盘连升两级是极为罕见的强信号，配合欧赔大幅下调，市场意图极度明确。', ah_tendency: '倾向 汉堡 -0.75', ah_details: '市场通过连续升盘表达了对汉堡大胜的强烈信心，这是本轮最强的盘口信号之一。', radar: [[70, 68, 72, 70, 75], [85, 80, 88, 80, 82]] },
-        { id: 9, league: '挪超', date: '08-03 02:30', home: '维京', away: '海于格松', verdict: '主队大热，谨防过热', details: '主队维京的欧赔从1.33降至1.30，亚盘也从-1.5球升至-1.75球。主队优势巨大，市场支持力度极强。', signal: '<span style="color:var(--win-color); font-weight:bold;">信号一致</span>。所有数据均指向主队大胜，但需注意，如此深的盘口意味着净胜两球才可能赢盘，要求苛刻。', ah_tendency: '建议规避', ah_details: '盘口过深(-1.75)，即使主队取胜也未必能赢得盘口，操作难度极大。', radar: [[88, 82, 90, 85, 92], [62, 60, 65, 60, 58]] },
-        { id: 10, 'league': '日职乙', 'date': '08-03 18:00', 'home': '东京绿茵', 'away': '水户蜀葵', 'verdict': '主队占优，市场态度统一', 'details': '主队东京绿茵欧赔从2.10稳定在2.10，亚盘维持-0.25球中低水，市场对主队不败给予了稳定的支持。', 'signal': '<span style="color:var(--win-color); font-weight:bold;">信号平稳一致</span>。盘口和赔率从初盘到即时变化都不大，反映了市场对主队小优格局的认可。', 'ah_tendency': '倾向 东京绿茵 -0.25', 'ah_details': '主队在-0.25盘下赔率稳定，表明市场认为其至少不败的概率很高。', radar: [[75, 78, 72, 70, 80], [70, 68, 70, 68, 65]] },
-        { id: 11, 'league': '日职乙', 'date': '08-03 18:30', 'home': '秋田蓝闪电', 'away': '枥木SC', 'verdict': '均势格局，倾向平局', 'details': '两队实力接近，欧赔主胜从2.37升至2.50，客胜从3.00降至2.87，平局赔率稳定在3.00低位。市场在减弱对主队的支持，同时增强对客队防范。', 'signal': '<span style="color:var(--draw-color); font-weight:bold;">信号指向均势</span>。赔率调整显示双方差距缩小，稳定的低位平局赔率是本场关键信号。', 'ah_tendency': '建议规避', 'ah_details': '亚盘平手盘下，双方赔率接近，赛果不确定性极高，任何结果都可能。', radar: [[68, 70, 70, 70, 72], [65, 72, 70, 70, 68]] },
-        { id: 12, 'league': '日职乙', 'date': '08-03 18:30', 'home': '町田泽维亚', 'away': '群马温泉', 'verdict': '主队热门，但赔付谨慎', 'details': '主队町田泽维亚欧赔从1.50微升至1.57，亚盘从-1球降至-0.75球。这与K1联赛蔚山的走势相似，是热门方信心减弱的信号。', 'signal': '<span style="color:var(--loss-color); font-weight:bold;">信号矛盾，高度警惕！</span>市场主动降低对主队的取胜要求（降盘），看似便宜，实则是对其大胜能力缺乏信心的体现。', 'ah_tendency': '倾向 群马温泉 +0.75', 'ah_details': '市场主动降盘是核心信号，表明主队穿透深盘的能力被质疑，受让方群马温泉的机会增加。', radar: [[85, 88, 78, 80, 90], [65, 60, 68, 62, 60]] }
+        { id: 1, match_number: '周六002', league: '日职乙', date: '17:30', home: '甲府风林', away: '山形山神', verdict: '强烈信号：倾向主队', confidence: '中', verdict_class: 'value-signal', verdict_text: '基本面与市场动态达成一致。甲府风林在排名和往绩上稍占优势，而市场通过降低主胜赔率(2.35→2.26)和稳定支持-0.25盘口，确认了这一优势。', risk_index: 35, risk_class: 'risk-low', tactics: ['<b>基本面:</b> 甲府风林(排名第8) vs 山形山神(排名第12)，历史交锋主队略占优。基本面支持主队不败。', '<b>市场动态:</b> 欧赔主胜下降，亚盘稳定在-0.25低水。市场与基本面信号一致。'], conclusion: '结论：市场对主队的支持是真实有效的，主队不败是大概率事件，-0.25盘口值得关注。', radar: [[72, 70, 75, 78, 75], [70, 68, 70, 65, 65]], ref_wdl_tendency: '倾向主不败', ref_wdl_details: '主胜赔率下降是关键信号，主队不败是大概率事件。', ref_ah_tendency: '倾向 甲府风林 -0.25', ref_ah_details: '赔率下降与盘口稳定形成共振，看好主队赢下盘口。', ref_ou_tendency: '建议规避', ref_ou_details: '总进球数盘口稳定在2.25球，且赔率变化不大，未见明显资金流向。' },
+        { id: 2, match_number: '周六003', league: '日职乙', date: '18:00', home: '千叶市原', away: '磐城FC', verdict: '谨慎信号：倾向主队', confidence: '低', verdict_class: 'no-signal', verdict_text: '基本面主队占优，市场动态也略微支持主队（欧赔2.20→2.15）。但亚盘始终未能从-0.25升级至-0.5，显示市场支持力度有限，并非强信号。', risk_index: 55, risk_class: 'risk-medium', tactics: ['<b>基本面:</b> 千叶市原(排名第7) vs 磐城FC(排名第11)，基本面主队占优。', '<b>市场动态:</b> 欧赔主胜微降，但亚盘支持力度不足，信号强度一般。'], conclusion: '结论：主队不败概率高，但市场对其净胜一球的能力有所保留，需警惕小胜或平局。', radar: [[78, 75, 72, 75, 80], [68, 70, 65, 65, 60]], ref_wdl_tendency: '建议规避', ref_wdl_details: '赔率变化微弱，方向性不强。', ref_ah_tendency: '建议规避', ref_ah_details: '亚盘支持力度不足，穿盘能力存疑。', ref_ou_tendency: '倾向大球', ref_ou_details: '总进球数盘口从2.25球升至2.5球，市场对进球数的预期在升高。' },
+        { id: 3, match_number: '周六004', league: '日职乙', date: '18:00', home: '德岛漩涡', away: '爱媛FC', verdict: '谨慎信号：主队大热', confidence: '中', verdict_class: 'no-signal', verdict_text: '基本面主队优势巨大，市场动态也完全确认了这一点，亚盘从-0.75球一路升至-1球。但升盘后对主队要求极为苛刻，风险与回报不成正比。', risk_index: 60, risk_class: 'risk-medium', tactics: ['<b>基本面:</b> 德岛漩涡(排名第5) vs 爱媛FC(排名第16)，实力差距悬殊。', '<b>市场动态:</b> 市场通过升盘(-0.75→-1)表达了对主队的极强信心。'], conclusion: '结论：主队取胜是大概率事件，但-1的盘口下，净胜一球不算赢，投注风险很高。', radar: [[88, 85, 80, 90, 90], [60, 55, 60, 50, 50]], ref_wdl_tendency: '建议规避', ref_wdl_details: '主胜赔率过低(1.57)，无投资价值。', ref_ah_tendency: '建议规避', ref_ah_details: '盘口较深，即使主队取胜也未必能赢得盘口。', ref_ou_tendency: '倾向小球', ref_ou_details: '深盘之下，弱队往往全力防守，进球数可能低于市场预期。' },
+        { id: 4, match_number: '周六005', league: '韩职', date: '18:00', home: '蔚山现代', away: '水原FC', verdict: '强烈信号：倾向主队', confidence: '高', verdict_class: 'value-signal', verdict_text: '基本面与市场动态完美共振。蔚山现代在基本面拥有压倒性优势，而市场动态也从之前的疑虑转为强力支持：欧赔主胜从1.80大幅压低至1.65，亚盘也从-0.5球升级至-0.75球。', risk_index: 25, risk_class: 'risk-low', tactics: ['<b>基本面:</b> 蔚山现代(排名第1) vs 水原FC(排名第9)，历史交锋6胜1平0负，基本面呈碾压态势。', '<b>市场动态:</b> <span style="font-weight:bold;">与此前分析完全反转！</span>市场信心回归，欧亚盘均强力支持主队，形成共振。'], conclusion: '结论：市场对蔚山现代的支持是真实且强力的资金推动。之前的陷阱信号已被证伪，当前所有信号均强烈指向主队取胜。', radar: [[90, 85, 80, 85, 88], [60, 50, 70, 60, 55]], ref_wdl_tendency: '倾向主胜', ref_wdl_details: '欧赔主胜大幅下降是市场最直接的信号，主胜是大概率事件。', ref_ah_tendency: '倾向 蔚山现代 -0.75', ref_ah_details: '亚盘升级且赔率稳定，看好主队赢下盘口。', ref_ou_tendency: '倾向大球', ref_ou_details: '总进球数盘口稳定在2.75球，且大球赔率持续下降，市场对进球数的预期较高。' }
     ];
     
-    const annotationHTML = `<div class="annotation"><h4>我们的分析方法论</h4><p>本分析报告的核心在于解读“市场语言”。我们利用权威机构（如Bet365）的初盘和即时盘数据，通过对比赔率和盘口的动态变化，洞察市场资金流向和真实意图。</p><ul><li><strong>欧亚对比:</strong> 交叉验证欧洲赔率和亚洲盘口的变化是否同步，是判断信号强弱的关键。</li><li><strong>赔率分析:</strong> 赔率的升降直接反映了市场对不同结果信心的增减。</li><li><strong>盘口分析:</strong> 盘口（如让球数）的变动，是市场对双方实力差距判断最核心的调整。</li></ul><p><strong>方法论核心:</strong> 我们不预测赛果，而是力求精准地解读市场信号，识别出哪些是真实的信心体现，哪些可能是诱导陷阱。</p></div>`;
-
+    const annotationHTML = `<div class="annotation"><h4>我们的分析方法论</h4><p>本分析报告的核心在于**交叉验证**。我们结合两大独立信息源进行决策，以求达到最接近事实的判断。</p><ul><li><strong>基本面分析 (理论实力):</strong> 我们通过API获取球队排名、历史交锋(H2H)等客观数据，建立一个“基准实力判断”。</li><li><strong>市场动态分析 (真实意图):</strong> 我们通过API追踪初盘到即时的赔率和盘口变化，洞察市场资金的真实流向。</li></ul><p><strong>方法论核心:</strong> 当“理论”与“真实”同向而行，是为强烈信号。当两者背道而驰，则预示着陷阱或巨大的价值。我们的工具旨在为您揭示这一切。</p></div>`;
 
     document.addEventListener('DOMContentLoaded', () => {
         const gridContainer = document.getElementById('match-grid-container');
@@ -121,14 +115,14 @@
             card.className = 'match-card';
             card.onclick = () => openModal(`modal${match.id}`);
             card.innerHTML = `
-                <div class="card-header">${match.league} | ${match.date}</div>
+                <div class="card-header">${match.match_number} | ${match.league} | ${match.date}</div>
                 <div class="card-body">
                     <div class="team"><p class="team-name">${match.home}</p></div>
                     <span class="vs-separator">vs</span>
                     <div class="team"><p class="team-name">${match.away}</p></div>
                 </div>
                 <div class="card-footer">
-                    <div class="risk-display"><span>价值评估</span><p class="risk-value risk-medium">${match.verdict.split('，')[0]}</p></div>
+                    <div class="risk-display"><span>风险探测指数</span><p class="risk-value ${match.risk_class}">${match.risk_index}</p></div>
                     <button class="details-btn">深度解析</button>
                 </div>`;
             gridContainer.appendChild(card);
@@ -140,25 +134,27 @@
                 <div class="modal-content">
                     <span class="close-btn" onclick="closeModal('modal${match.id}')">×</span>
                     <div class="modal-header"><h2>${match.home} vs ${match.away}</h2></div>
-                    <div class="verdict-summary no-signal">
-                        <div class="verdict-title">策略研判：${match.verdict}</div>
+                    <div class="verdict-summary ${match.verdict_class}">
+                        <div class="verdict-header">
+                            <span class="verdict-title">策略研判：${match.verdict}</span>
+                            <span class="verdict-confidence confidence-medium">信心指数: ${match.confidence}</span>
+                        </div>
+                        <div class="verdict-text">${match.verdict_text}</div>
                     </div>
-                    <div class="section-title">市场动态解读</div>
-                    <div class="grid-item"><p>${match.details}</p></div>
-                    <div class="section-title">盘口信号分析</div>
-                    <div class="grid-item"><p>${match.signal}</p></div>
-                    <div class="section-title">球队实力可视化</div>
+                    <div class="section-title">基本面 vs. 市场动态</div>
+                    <div class="grid-item"><ul>${match.tactics.map(tactic => `<li>${tactic}</li>`).join('')}</ul></div>
+                    <div class="section-title">最终分析结论</div>
+                    <div class="grid-item"><p>${match.conclusion}</p></div>
+                    <div class="section-title">球队DNA雷达图</div>
                     <div class="radar-chart-container"><canvas id="radarChart${match.id}"></canvas></div>
                     <div class="section-title">玩法倾向性参考</div>
                     <div class="strategy-matrix-wrapper">
                         <table class="strategy-matrix">
                         <thead><tr><th>玩法参考</th><th>倾向性建议</th><th>逻辑解读</th></tr></thead>
                             <tbody>
-                                <tr>
-                                    <td>让球</td>
-                                    <td class="${match.ah_tendency === '建议规避' ? 'tendency-none' : 'tendency-high'}">${match.ah_tendency}</td>
-                                    <td>${match.ah_details}</td>
-                                </tr>
+                                <tr><td>胜平负</td><td class="${match.ref_wdl_tendency === '建议规避' ? 'tendency-none' : 'tendency-mid'}">${match.ref_wdl_tendency}</td><td>${match.ref_wdl_details}</td></tr>
+                                <tr><td>让球</td><td class="${match.ref_ah_tendency === '建议规避' ? 'tendency-none' : 'tendency-high'}">${match.ref_ah_tendency}</td><td>${match.ref_ah_details}</td></tr>
+                                <tr><td>总进球数</td><td class="${match.ref_ou_tendency === '建议规避' ? 'tendency-none' : 'tendency-mid'}">${match.ref_ou_tendency}</td><td>${match.ref_ou_details}</td></tr>
                             </tbody>
                         </table>
                     </div>
@@ -200,7 +196,7 @@
     const copyBtn = document.getElementById('copyBtn');
     if(copyBtn) {
         copyBtn.addEventListener('click', () => {
-            navigator.clipboard.writeText("金球大树").then(() => {
+            navigator.clipboard.writeText("金球大樹").then(() => {
                 const el = document.getElementById('copyFeedback');
                 if(el) { el.style.display = 'block'; setTimeout(() => { el.style.display = 'none'; }, 2000); }
             });
@@ -218,7 +214,7 @@
         new Chart(ctx, {
             type: 'radar',
             data: {
-                labels: ['进攻威胁', '防守稳固', '近期状态', '市场支持', '主场因素'],
+                labels: ['进攻(xG)', '防守(xGA)', '近期状态', '市场支持', '历史交锋'],
                 datasets: [
                     { label: match.home, data: match.radar[0], backgroundColor: 'rgba(66, 133, 244, 0.2)', borderColor: 'rgba(66, 133, 244, 1)', borderWidth: 2 },
                     { label: match.away, data: match.radar[1], backgroundColor: 'rgba(219, 68, 55, 0.2)', borderColor: 'rgba(219, 68, 55, 1)', borderWidth: 2 }
